@@ -11,6 +11,8 @@ source:
 
 build:
   number: 0
+  # The audio back ends (ALSA, PulseAudio) are Linux-only. Upstream also
+  # supports macOS and Windows, which a later feedstock version can add.
   skip:
     - not linux
   script:
@@ -32,6 +34,8 @@ requirements:
     - libpng
     - zlib
     - libgl-devel
+    # xroar calls Xlib directly as well as through SDL
+    - xorg-libx11
 
 tests:
   - script:
@@ -44,8 +48,13 @@ about:
   homepage: https://www.6809.org.uk/xroar/
   repository: https://www.6809.org.uk/git/xroar.git
   documentation: https://www.6809.org.uk/xroar/doc/xroar.shtml
-  license: GPL-3.0-or-later
-  license_file: COPYING.GPL
+  # XRoar is GPL; its bundled portalib is LGPL, and portalib vendors the SDS
+  # string library (BSD-3-Clause, notice in README.SDS)
+  license: GPL-3.0-or-later AND LGPL-3.0-or-later AND BSD-3-Clause
+  license_file:
+    - COPYING.GPL
+    - COPYING.LGPL
+    - README.SDS
   summary: Dragon and Tandy Color Computer emulator
   description: |
     XRoar emulates the Dragon 32/64, Tandy Color Computer 1, 2 and 3, the

@@ -30,7 +30,8 @@ cd "$work/$name"
 ./configure --prefix=/ --without-gtk3 --without-gtk2
 make -j"$(nproc)"
 make install DESTDIR="$work/$pkg"
-cp COPYING.GPL COPYING.LGPL README "$work/$pkg/"
+# README.SDS carries the BSD notice for the SDS library that portalib bundles
+cp COPYING.GPL COPYING.LGPL README README.SDS "$work/$pkg/"
 
 # Fail the build rather than ship a binary missing a front end
 modules=$("$work/$pkg/bin/xroar" -ui help 2>&1 && "$work/$pkg/bin/xroar" -ao help 2>&1)

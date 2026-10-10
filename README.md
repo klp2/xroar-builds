@@ -39,5 +39,6 @@ conda-forge/recipe.yaml -c conda-forge` and a variant config that sets
 
 ## License
 
-XRoar is GPL-3.0-or-later. Every release attaches the upstream source tarball
-it was built from. The build scripts here are under the same license.
+XRoar is GPL-3.0-or-later; its bundled portalib is LGPL-3.0-or-later and
+includes the SDS string library (BSD-3-Clause). Every release attaches the
+upstream source tarball it was built from. The build scripts here are under the same license.
