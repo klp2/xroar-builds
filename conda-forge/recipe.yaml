@@ -1,0 +1,57 @@
+context:
+  version: "1.12.1"
+
+package:
+  name: xroar
+  version: ${{ version }}
+
+source:
+  url: https://www.6809.org.uk/xroar/dl/xroar-${{ version }}.tar.gz
+  sha256: ba525225fbd732c4dbf2cbb571dc9d2810fd9dcedf0482133cf637e2eef61f88
+
+build:
+  number: 0
+  skip:
+    - not linux
+  script:
+    - ./configure --prefix="$PREFIX" --without-gtk3 --without-gtk2
+    - make -j"${CPU_COUNT}"
+    - make install
+
+requirements:
+  build:
+    - ${{ compiler('c') }}
+    - ${{ stdlib('c') }}
+    - make
+    - pkg-config
+  host:
+    - sdl3
+    - libsndfile
+    - alsa-lib
+    - pulseaudio-client
+    - libpng
+    - zlib
+    - libgl-devel
+
+tests:
+  - script:
+      - xroar -ui help
+      - xroar -ao help
+      - xroar -ui help | grep -q "SDL3 UI"
+      - xroar -ao help | grep -q "PulseAudio"
+
+about:
+  homepage: https://www.6809.org.uk/xroar/
+  repository: https://www.6809.org.uk/git/xroar.git
+  documentation: https://www.6809.org.uk/xroar/doc/xroar.shtml
+  license: GPL-3.0-or-later
+  license_file: COPYING.GPL
+  summary: Dragon and Tandy Color Computer emulator
+  description: |
+    XRoar emulates the Dragon 32/64, Tandy Color Computer 1, 2 and 3, the
+    Tandy MC-10, and several related machines. This build uses the SDL3
+    interface and SDL3, ALSA, and PulseAudio audio.
+
+extra:
+  recipe-maintainers:
+    - klp2

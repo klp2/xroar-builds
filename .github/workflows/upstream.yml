@@ -1,0 +1,36 @@
+name: upstream
+
+# Weekly: open an issue when upstream has a newer XRoar than VERSION. Bumping
+# is manual on purpose: upstream publishes no checksums, so a person records the
+# new tarball's sha256 in VERSION.
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare with upstream
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          read -r pinned _ <VERSION
+          latest=$(curl -fsSL https://www.6809.org.uk/xroar/dl/ |
+            grep -oE 'xroar-[0-9]+(\.[0-9]+)+\.tar\.gz' | sed 's/^xroar-//; s/\.tar\.gz$//' |
+            sort -uV | tail -1)
+          echo "pinned $pinned, upstream $latest"
+          if [ -z "$latest" ] || [ "$latest" = "$pinned" ] ||
+            [ "$(printf '%s\n%s\n' "$pinned" "$latest" | sort -V | tail -1)" = "$pinned" ]; then
+            exit 0
+          fi
+          title="XRoar $latest is out"
+          if gh issue list --state open --search "\"$title\" in:title" --json number --jq 'length' | grep -qx 0; then
+            gh issue create --title "$title" --body "Upstream has xroar-$latest.tar.gz (pinned: $pinned). Download https://www.6809.org.uk/xroar/dl/xroar-$latest.tar.gz, check it, and put \`$latest <sha256>\` in VERSION; the release workflow builds it."
+          fi

@@ -1,0 +1,54 @@
+name: release
+
+# Builds the XRoar version pinned in VERSION and publishes it as release
+# v<version>, unless that release already exists. mise installs from these
+# releases (github:klp2/xroar-builds).
+on:
+  push:
+    branches: [main]
+    paths: [VERSION, build.sh, .github/workflows/release.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # The old glibc in this image is what lets the binary run on newer distros
+    container: ubuntu:22.04
+    steps:
+      - name: Install git and gh
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends git ca-certificates curl gpg >/dev/null
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+            -o /usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+            >/etc/apt/sources.list.d/github-cli.list
+          apt-get update -qq
+          apt-get install -y -qq gh >/dev/null
+      - uses: actions/checkout@v4
+      - name: Skip an existing release
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          read -r version _ <VERSION
+          echo "version=$version" >>"$GITHUB_OUTPUT"
+          if gh release view "v$version" >/dev/null 2>&1; then
+            echo "exists=true" >>"$GITHUB_OUTPUT"
+          fi
+      - name: Build
+        if: steps.check.outputs.exists != 'true'
+        run: ./build.sh
+      - name: Publish
+        if: steps.check.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          gh release create "v$VERSION" dist/* \
+            --title "XRoar $VERSION" \
+            --notes "XRoar $VERSION (https://www.6809.org.uk/xroar/) built for x86_64 Linux in ubuntu:22.04, linking the system's SDL2, ALSA, PulseAudio, libsndfile, and libpng. The upstream source tarball it was built from is attached, as the GPL requires."
